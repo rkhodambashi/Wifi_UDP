@@ -16,9 +16,10 @@
 #include <SPI.h>
 #include <WiFi101.h>
 #include <WiFiUdp.h>
-
+#include "MIDIUSB.h"
+//MIDI_CREATE_DEFAULT_INSTANCE();
 int status = WL_IDLE_STATUS;
-#include "arduino_secrets.h" 
+#include "arduino_secrets.h"
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
@@ -64,6 +65,16 @@ void setup() {
   // if you get a connection, report back via serial:
   Udp.begin(localPort);
 }
+// First parameter is the event type (0x0B = control change).
+// Second parameter is the event type, combined with the channel.
+// Third parameter is the control number number (0-119).
+// Fourth parameter is the control value (0-127).
+
+void controlChange(byte channel, byte control, byte value) {
+  midiEventPacket_t event = {0x0B, 0xB0 | channel, control, value};
+  MidiUSB.sendMIDI(event);
+}
+
 int i=0;
 void loop() {
 
@@ -71,6 +82,13 @@ void loop() {
   int packetSize = Udp.parsePacket();
   if (packetSize)
   {
+    noteOn(0, 48, 64);   // Channel 0, middle C, normal velocity
+    MidiUSB.flush();
+    //delay(500);
+    Serial.println("Sending note off");
+    noteOff(0, 48, 64);  // Channel 0, middle C, normal velocity
+    MidiUSB.flush();
+    //delay(1500);
     i++;
 //    Serial.print("Received packet of size ");
 //    Serial.println(packetSize);
@@ -111,4 +129,13 @@ void printWiFiStatus() {
   Serial.print("signal strength (RSSI):");
   Serial.print(rssi);
   Serial.println(" dBm");
+}
+void noteOn(byte channel, byte pitch, byte velocity) {
+  midiEventPacket_t noteOn = {0x09, 0x90 | channel, pitch, velocity};
+  MidiUSB.sendMIDI(noteOn);
+}
+
+void noteOff(byte channel, byte pitch, byte velocity) {
+  midiEventPacket_t noteOff = {0x08, 0x80 | channel, pitch, velocity};
+  MidiUSB.sendMIDI(noteOff);
 }
