@@ -84,7 +84,7 @@ void loop() {
   {
     noteOn(0, 48, 64);   // Channel 0, middle C, normal velocity
     MidiUSB.flush();
-    //delay(500);
+    delay(500);
     Serial.println("Sending note off");
     noteOff(0, 48, 64);  // Channel 0, middle C, normal velocity
     MidiUSB.flush();
